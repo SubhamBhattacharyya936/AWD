@@ -662,6 +662,27 @@
             transform: translateY(-5px);
         }
         
+        /* Form Messages */
+        .form-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+            display: none;
+        }
+        
+        .form-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .form-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
         /* Responsive Design */
         @media (max-width: 768px) {
             .menu-toggle {
@@ -976,6 +997,7 @@
             
             <div class="contact-form animate delay-2">
                 <h3>Send Me a Message</h3>
+                <div id="formMessage" class="form-message"></div>
                 <form id="contactForm">
                     <div class="form-group">
                         <label for="name">Your Name</label>
@@ -986,6 +1008,10 @@
                         <input type="email" id="email" name="email" required>
                     </div>
                     <div class="form-group">
+                        <label for="phone">Your Phone (Optional)</label>
+                        <input type="tel" id="phone" name="phone">
+                    </div>
+                    <div class="form-group">
                         <label for="subject">Subject</label>
                         <input type="text" id="subject" name="subject" required>
                     </div>
@@ -993,7 +1019,7 @@
                         <label for="message">Your Message</label>
                         <textarea id="message" name="message" required></textarea>
                     </div>
-                    <button type="submit" class="submit-btn">Send Message</button>
+                    <button type="submit" class="submit-btn" id="submitBtn">Send Message</button>
                 </form>
             </div>
         </div>
@@ -1101,23 +1127,71 @@
         // Check on scroll
         window.addEventListener('scroll', checkScroll);
         
- const contactForm = document.getElementById('contactForm');
+        // Contact Form Submission to Google Sheets
+        const contactForm = document.getElementById('contactForm');
+        const formMessage = document.getElementById('formMessage');
+        const submitBtn = document.getElementById('submitBtn');
         
         contactForm.addEventListener('submit', (e) => {
             e.preventDefault();
             
+            // Change button text to show loading
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+            submitBtn.disabled = true;
+            
             // Get form values
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
+            const phone = document.getElementById('phone').value || 'Not provided';
+            const subject = document.getElementById('subject').value;
             const message = document.getElementById('message').value;
             
-            // Here you would typically send this data to a server
-            // For this example, we'll just show an alert
-            alert(`Thank you, ${name}! Your message has been sent. I'll contact you soon at ${email}.`);
+            // YOUR ACTUAL WEB APP URL
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbw8FXMx2Va0vdd_yqm2ueJ-RL1PC7q_HexWYUStjsbxrFjELURuQ9D9KoilkaKCYFiZDw/exec';
             
-            // Reset form
-            contactForm.reset();
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('email', email);
+            formData.append('phone', phone);
+            formData.append('subject', subject);
+            formData.append('message', message);
+            
+            // Send data to Google Sheets
+            fetch(scriptURL, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.result === 'success') {
+                    // Show success message
+                    formMessage.innerHTML = '<i class="fas fa-check-circle"></i> Thank you! Your message has been sent successfully.';
+                    formMessage.className = 'form-message success';
+                    formMessage.style.display = 'block';
+                    
+                    // Reset form
+                    contactForm.reset();
+                } else {
+                    throw new Error(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                formMessage.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Sorry, there was an error. Please try again or contact me directly.';
+                formMessage.className = 'form-message error';
+                formMessage.style.display = 'block';
+            })
+            .finally(() => {
+                // Reset button
+                submitBtn.innerHTML = 'Send Message';
+                submitBtn.disabled = false;
+                
+                // Hide message after 5 seconds
+                setTimeout(() => {
+                    formMessage.style.display = 'none';
+                }, 5000);
+            });
         });
         
         // Scroll to top button
