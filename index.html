@@ -1230,6 +1230,39 @@
                 scrollToTopBtn.style.display = 'none';
             }
         });
+
+        // Disable Right Click
+document.addEventListener("contextmenu", function(e){
+    e.preventDefault();
+});
+
+// Disable F12, Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+U
+document.onkeydown = function(e) {
+    if (e.keyCode == 123) { // F12
+        return false;
+    }
+    if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 67)) {
+        // Ctrl+Shift+I or Ctrl+Shift+C
+        return false;
+    }
+    if (e.ctrlKey && e.keyCode == 85) {
+        // Ctrl+U
+        return false;
+    }
+};
+
+        (function() {
+    const element = new Image();
+    Object.defineProperty(element, 'id', {
+        get: function() {
+            alert("DevTools is open. Closing website.");
+            window.location.href = "about:blank";
+        }
+    });
+    console.log(element);
+})();
+
+        
     </script>
 </body>
 </html>
